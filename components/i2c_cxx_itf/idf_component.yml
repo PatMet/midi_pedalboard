@@ -1,0 +1,5 @@
+dependencies:
+  idf: '>=5.2'
+description: C++ API for I2C Master driver
+url: 
+version: 0.1.0
