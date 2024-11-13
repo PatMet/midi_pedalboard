@@ -1,11 +1,30 @@
 #pragma once
-
+#include <exception>
 extern "C" {
 #include "driver/i2c_types.h"
 #include "driver/i2c_master.h"
 }
 
 namespace I2CMaster{
+
+    class I2CDriverException : public std::exception{
+//        private:
+//        char * message;
+
+    public:
+//        I2CDriverException(char * msg) : message(msg) {}
+        char * what () {
+//            return message;
+            return "I2C driver error:";
+        }
+    };
+
+    class I2CBusErrorException : public std::exception{
+    public:
+        char * what () {
+            return "I2C bus error:";
+        }
+    };
 
     class I2CBus{
         i2c_master_bus_config_t m_i2c_master_config; // TODO utile à conserve comme membre ? ou jetable ?

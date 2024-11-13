@@ -1,4 +1,5 @@
 #include "i2c_master_bus.hpp"
+#include <sstream>
 
 I2CMaster::I2CBus::I2CBus(
     i2c_port_t i2c_port,
@@ -20,12 +21,16 @@ I2CMaster::I2CBus::I2CBus(
     {
 
     // TODO remplacer ESP_ERROR_CHECK par un autre mécanisme de gestion d'erreur (exception ?)
-    ESP_ERROR_CHECK(i2c_new_master_bus(&m_i2c_master_config, &m_bus_handle));
-
+    //ESP_ERROR_CHECK(i2c_new_master_bus(&m_i2c_master_config, &m_bus_handle));
+    esp_err_t err_code = i2c_new_master_bus(&m_i2c_master_config, &m_bus_handle);
+    if(err_code != ESP_OK){
+        // throw I2CDriverException(esp_err_to_name(err_code)); // doesn't work (char* problems)
+        ESP_ERROR_CHECK_WITHOUT_ABORT(err_code);  // to have the error message
+        throw I2CDriverException();
+    }
 }
 
 I2CMaster::I2CBus::~I2CBus(){
-    // TODO verifier si tous les devices ont été supprimés au préalable
-    // TODO remplacer ESP_ERROR_CHECK par un autre mécanisme de gestion d'erreur (exception ?)
-    ESP_ERROR_CHECK(i2c_del_master_bus(m_bus_handle));
+    // TODO verifier si tous les devices ont été supprimés au préalable ?
+    ESP_ERROR_CHECK_WITHOUT_ABORT(i2c_del_master_bus(m_bus_handle));
 }

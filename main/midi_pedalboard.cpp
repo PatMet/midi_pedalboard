@@ -43,16 +43,24 @@ extern "C" void app_main(void)
         GPIO_NUM_8, // SCL pin
         false,      // enable internal pullups
     };
-
     MCP23017::MCP23017 gpio0{i2c_bus, MCP23017::SubAddress_e::SUBADDR_0};
+    MCP23017::MCP23017 gpio1{i2c_bus, MCP23017::SubAddress_e::SUBADDR_1};
+
     gpio0.set_ports_direction(0xFF, 0xFF); // all pins as inputs
     gpio0.set_ports_polarity(0xFF, 0xFF); // inverted polarity
     gpio0.set_ports_pullups(0xFF, 0xFF); // pull-up resistors enable
+    std::cout << "gpio0 config done." << std::endl;
+    gpio0.set_config(
+        0xFF, 0xFF, // all pins as inputs (default)
+        0xFF, 0xFF, // inverted polarity
+        0xFF, 0xFF); // pull-up resistors enable
+    std::cout << "gpio0 set_config done." << std::endl;
 
-    MCP23017::MCP23017 gpio1{i2c_bus, MCP23017::SubAddress_e::SUBADDR_1};
-    gpio1.set_ports_direction(0xFF, 0xFF); // all pins as inputs
-    gpio1.set_ports_polarity(0xFF, 0xFF); // inverted polarity
-    gpio1.set_ports_pullups(0xFF, 0xFF); // pull-up resistors enable
+    gpio1.set_config(
+        0xFF, 0xFF, // all pins as inputs (default)
+        0xFF, 0xFF, // inverted polarity
+        0xFF, 0xFF); // pull-up resistors enable
+    std::cout << "gpio1 set_config done." << std::endl;
 
     led.blink(1);
 
@@ -75,8 +83,22 @@ extern "C" void app_main(void)
         const auto start_time = std::chrono::high_resolution_clock::now();
 
         // Pedals status update
+
+        // GPIO1 (MSB) first
         pedals_status_prec = pedals_status;
-        pedals_status << gpio1.read_ports() << gpio0.read_ports();
+        if (gpio1.get_status() == MCP23017::Status_e::STS_READY){
+            pedals_status << gpio1.read_ports();
+        } else {
+            gpio1.check_status();
+            pedals_status << 0x00;  // default pedals states if gpio unavailable
+        }
+        // GPIO0 (LSB)
+        if (gpio0.get_status() == MCP23017::Status_e::STS_READY){
+            pedals_status << gpio0.read_ports();
+        } else {
+            gpio0.check_status();
+            pedals_status << 0x00;  // default pedals states if gpio unavailable
+        }
 
         // Pedals status changed
         if (pedals_status != pedals_status_prec){

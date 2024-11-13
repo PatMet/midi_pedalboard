@@ -1,4 +1,5 @@
 #pragma once
+#include <map>
 #include <utility>
 
 #include "i2c_master_bus.hpp"
@@ -18,17 +19,12 @@ namespace MCP23017{
         SUBADDR_7,
     };
 
-    //GPIO Pins masks
-    enum class Pin_e : uint8_t
+    //Device status
+    enum class Status_e
     {    
-        PIN_0 = 1 << 0,
-        PIN_1 = 1 << 1,
-        PIN_2 = 1 << 2,
-        PIN_3 = 1 << 3,
-        PIN_4 = 1 << 4,
-        PIN_5 = 1 << 5,
-        PIN_6 = 1 << 6,
-        PIN_7 = 1 << 7,
+        STS_DISCONNECTED,
+        STS_CONNECTED,
+        STS_READY,
     };
 
     // GPIO Ports
@@ -88,11 +84,16 @@ namespace MCP23017{
 
     class MCP23017{
         I2CMaster::I2CDevice m_device;
+        std::map<RegPair_e, std::vector<uint8_t>> m_config;
+        int m_timeout_ms;
+        Status_e m_status;
+
     public:
         MCP23017(
             I2CMaster::I2CBus& master_bus,
             SubAddress_e device_sub_address, // 0..7 hardware configuration
-            uint32_t scl_speed_hz = 100000);
+            uint32_t scl_speed_hz = 100000UL,
+            int timeout_ms=-1);
 
         MCP23017(const MCP23017&) = delete;
         MCP23017& operator=(const MCP23017&) = delete;
@@ -100,24 +101,37 @@ namespace MCP23017{
         ~MCP23017(){};
 
         // general single register read/write
-        auto read_register(const Reg_e reg, const int timeout_ms=-1) -> uint8_t;
-        void write_register(const Reg_e reg, const uint8_t value, const int timeout_ms=-1);
+        auto read_register(const Reg_e reg) -> uint8_t;
+        void write_register(const Reg_e reg, const uint8_t value);
         // general register pair read/write
-        auto read_registers(const RegPair_e regs, const int timeout_ms=-1) -> std::vector<uint8_t>;
-        void write_registers(const RegPair_e regs, const uint8_t value_port_a, const uint8_t value_port_b, const int timeout_ms=-1);
+        auto read_registers(const RegPair_e regs) -> std::vector<uint8_t>;
+        void read_registers_into(const RegPair_e regs, std::vector<uint8_t>&values);
+        void write_registers(const RegPair_e regs, const uint8_t value_port_a, const uint8_t value_port_b);
 
         // Ports state
-        auto read_port(const Port_e port, const int timeout_ms=-1) -> uint8_t;
-        auto read_ports(const int timeout_ms=-1) -> std::vector<uint8_t>;
+        auto read_port(const Port_e port) -> uint8_t;
+        auto read_ports(void) -> std::vector<uint8_t>;
+
+        // Device configuration
         // Ports direction
-        void set_port_direction(const Port_e port, const uint8_t direction, const int timeout_ms=-1);
-        void set_ports_direction(const uint8_t direction_port_a, const uint8_t direction_port_b, const int timeout_ms=-1);
+        void set_port_direction(const Port_e port, const uint8_t direction);
+        void set_ports_direction(const uint8_t direction_port_a, const uint8_t direction_port_b);
         // Ports polarity
-        void set_port_polarity(const Port_e port, const uint8_t polarity, const int timeout_ms=-1);
-        void set_ports_polarity(const uint8_t polarity_port_a, const uint8_t polarity_port_b, const int timeout_ms=-1);
+        void set_port_polarity(const Port_e port, const uint8_t polarity);
+        void set_ports_polarity(const uint8_t polarity_port_a, const uint8_t polarity_port_b);
         // Ports pullups
-        void set_port_pullups(const Port_e port, const uint8_t pullups, const int timeout_ms=-1);
-        void set_ports_pullups(const uint8_t pullups_port_a, const uint8_t pullups_port_b, const int timeout_ms=-1);
+        void set_port_pullups(const Port_e port, const uint8_t pullups);
+        void set_ports_pullups(const uint8_t pullups_port_a, const uint8_t pullups_port_b);
+
+        void read_config(void);
+        void set_config(
+            const uint8_t direction_port_a, const uint8_t direction_port_b,
+            const uint8_t polarity_port_a, const uint8_t polarity_port_b,
+            const uint8_t pullups_port_a, const uint8_t pullups_port_b);
+        void write_config(void);
+
+        auto get_status(void) -> Status_e{return m_status;}
+        void check_status(void);
     };
 
 } // namespace

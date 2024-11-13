@@ -15,27 +15,38 @@ I2CMaster::I2CDevice::I2CDevice(
         .scl_speed_hz = scl_speed_hz,
     }
 {
-    // TODO remplacer ESP_ERROR_CHECK par un autre mécanisme de gestion d'erreur (exception ?)
-    ESP_ERROR_CHECK(i2c_master_bus_add_device(
+    esp_err_t err_code = i2c_master_bus_add_device(
         m_master_bus.m_bus_handle,
         &m_i2c_device_config,
-        &m_device_handle));
+        &m_device_handle);
+    if(err_code != ESP_OK){
+        // throw I2CDriverException(esp_err_to_name(err_code)); // doesn't work (char* problems)
+        ESP_ERROR_CHECK_WITHOUT_ABORT(err_code);  // to have the error message
+        throw I2CDriverException();
+    }
 }
 
 I2CMaster::I2CDevice::~I2CDevice(){
-    // TODO remplacer ESP_ERROR_CHECK par un autre mécanisme de gestion d'erreur (exception ?)
-    ESP_ERROR_CHECK(i2c_master_bus_rm_device(m_device_handle));
+    ESP_ERROR_CHECK_WITHOUT_ABORT(i2c_master_bus_rm_device(m_device_handle));
 }
 
 auto I2CMaster::I2CDevice::transmit(
     const std::vector<uint8_t>& data,
     const int timeout_ms) -> void
-    {
-    ESP_ERROR_CHECK_WITHOUT_ABORT(i2c_master_transmit(
+{
+    esp_err_t err_code = i2c_master_transmit(
         m_device_handle,
         data.data(),
         data.size(),
-        timeout_ms));
+        timeout_ms);
+    if ((err_code == ESP_ERR_TIMEOUT) || (err_code == ESP_ERR_INVALID_STATE)){
+        throw I2CBusErrorException();
+    }
+    if(err_code != ESP_OK){
+        // throw I2CDriverException(esp_err_to_name(err_code)); // doesn't work (char* problems)
+        ESP_ERROR_CHECK_WITHOUT_ABORT(err_code);  // to have the error message
+        throw I2CDriverException();
+    }
 }
 
 auto I2CMaster::I2CDevice::receive(
@@ -45,11 +56,19 @@ auto I2CMaster::I2CDevice::receive(
     // initialisation d'un vector de taille nb_data_to_read
     std::vector<uint8_t> data_to_read(nb_data_to_read);
 
-    ESP_ERROR_CHECK_WITHOUT_ABORT(i2c_master_receive(
+    esp_err_t err_code = i2c_master_receive(
         m_device_handle,
         data_to_read.data(),
         data_to_read.size(),
-        timeout_ms));
+        timeout_ms);
+    if ((err_code == ESP_ERR_TIMEOUT) || (err_code == ESP_ERR_INVALID_STATE)){
+        throw I2CBusErrorException();
+    }
+    if(err_code != ESP_OK){
+        // throw I2CDriverException(esp_err_to_name(err_code)); // doesn't work (char* problems)
+        ESP_ERROR_CHECK_WITHOUT_ABORT(err_code);  // to have the error message
+        throw I2CDriverException();
+    }
 
     return data_to_read;
 }
@@ -58,11 +77,19 @@ auto I2CMaster::I2CDevice::receive_in(
     std::vector<uint8_t>& data_to_read,
     const int timeout_ms) -> void
     {
-    ESP_ERROR_CHECK_WITHOUT_ABORT(i2c_master_receive(
+    esp_err_t err_code = i2c_master_receive(
         m_device_handle,
         data_to_read.data(),
         data_to_read.size(),
-        timeout_ms));
+        timeout_ms);
+    if ((err_code == ESP_ERR_TIMEOUT) || (err_code == ESP_ERR_INVALID_STATE)){
+        throw I2CBusErrorException();
+    }
+    if(err_code != ESP_OK){
+        // throw I2CDriverException(esp_err_to_name(err_code)); // doesn't work (char* problems)
+        ESP_ERROR_CHECK_WITHOUT_ABORT(err_code);  // to have the error message
+        throw I2CDriverException();
+    }
 }
 
 auto I2CMaster::I2CDevice::transmit_receive(
@@ -73,13 +100,21 @@ auto I2CMaster::I2CDevice::transmit_receive(
     // initialisation d'un vector de taille nb_data_to_read
     std::vector<uint8_t> data_to_read(nb_data_to_read);
 
-    ESP_ERROR_CHECK_WITHOUT_ABORT(i2c_master_transmit_receive(
+    esp_err_t err_code = i2c_master_transmit_receive(
         m_device_handle,
         data_to_write.data(),
         data_to_write.size(),
         data_to_read.data(),
         data_to_read.size(),
-        timeout_ms));
+        timeout_ms);
+    if ((err_code == ESP_ERR_TIMEOUT) || (err_code == ESP_ERR_INVALID_STATE)){
+        throw I2CBusErrorException();
+    }
+    if(err_code != ESP_OK){
+        // throw I2CDriverException(esp_err_to_name(err_code)); // doesn't work (char* problems)
+        ESP_ERROR_CHECK_WITHOUT_ABORT(err_code);  // to have the error message
+        throw I2CDriverException();
+    }
 
     return data_to_read;
 }
@@ -89,11 +124,19 @@ auto I2CMaster::I2CDevice::transmit_receive_in(
     std::vector<uint8_t>& data_to_read,
     const int timeout_ms) -> void
     {
-    ESP_ERROR_CHECK_WITHOUT_ABORT(i2c_master_transmit_receive(
+    esp_err_t err_code = i2c_master_transmit_receive(
         m_device_handle,
         data_to_write.data(),
         data_to_write.size(),
         data_to_read.data(),
         data_to_read.size(),
-        timeout_ms));
+        timeout_ms);
+    if ((err_code == ESP_ERR_TIMEOUT) || (err_code == ESP_ERR_INVALID_STATE)){
+        throw I2CBusErrorException();
+    }
+    if(err_code != ESP_OK){
+        // throw I2CDriverException(esp_err_to_name(err_code)); // doesn't work (char* problems)
+        ESP_ERROR_CHECK_WITHOUT_ABORT(err_code);  // to have the error message
+        throw I2CDriverException();
+    }
 }

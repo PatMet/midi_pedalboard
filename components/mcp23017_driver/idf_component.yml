@@ -1,5 +1,0 @@
-dependencies:
-  idf: '>=5.2'
-description: C++ Driver for MCP23017 I2C I/O expander device
-url: 
-version: 0.1.0
